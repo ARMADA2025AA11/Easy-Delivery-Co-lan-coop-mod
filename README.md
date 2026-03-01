@@ -167,3 +167,167 @@ EasyDeliveryCoLanCoop — это мод, который добавляет LAN-�
 - логи хоста и клиента
 - шаги воспроизведения
 - какие настройки в cfg использовались
+
+---
+
+# English
+
+LAN co-op mod for Easy Delivery Co built with BepInEx 5.
+
+Current version: 0.2.18
+
+## Repository Description
+
+EasyDeliveryCoLanCoop adds LAN multiplayer to Easy Delivery Co with Host/Client networking, player/car sync, partial progression sync, and extended vehicle SFX sync.
+
+This repository is intended for:
+
+- using the released DLL;
+- building from source;
+- collaborative networking/mod development.
+
+Project status: experimental.
+
+## Features
+
+- UDP-based LAN Host/Client networking
+- Automatic host discovery over LAN broadcast
+- Player, car, and in-car cargo synchronization
+- Money and partial save/progression synchronization
+- Vehicle sound synchronization:
+  - horn
+  - tire/skid sounds
+  - impact/crash sounds
+- Runs in background (does not stop when window loses focus)
+
+## Requirements
+
+- Windows
+- Easy Delivery Co
+- BepInEx 5 (Mono)
+
+## Installation
+
+1. Install BepInEx 5 into the game folder.
+2. Copy EasyDeliveryCoLanCoop.dll into:
+   - BepInEx/plugins/EasyDeliveryCoLanCoop/
+3. If Harmony is not auto-resolved, ensure 0Harmony.dll is available (usually via BepInEx or next to the plugin).
+
+## Quick Start
+
+### Option 1: Config mode
+
+Config file:
+- BepInEx/config/EasyDeliveryCoLanCoop.cfg
+
+Mode values:
+- Off
+- Host
+- Client
+
+For client mode also set HostAddress and Port.
+
+### Option 2: Launch arguments (recommended)
+
+Supported args:
+- --lancoop-server or --lancoop-host
+- --lancoop-client
+- --lancoop-off
+
+Example:
+- EasyDeliveryCo.exe --lancoop-server
+
+## Included Launcher Scripts
+
+- run_lancoop_server.bat
+- run_lancoop_client.bat
+- run_lancoop_off.bat
+
+PowerShell examples:
+
+- .\run_lancoop_server.bat "D:\Easy Delivery Co\EasyDeliveryCo.exe"
+- .\run_lancoop_client.bat "D:\Easy Delivery Co\EasyDeliveryCo.exe"
+
+## Important Settings
+
+### Network
+
+- Mode
+- Port
+- HostAddress
+- TickRate
+- ClientTimeoutSeconds
+
+### LAN Discovery
+
+- AutoDiscovery
+- DiscoveryPort
+- DiscoveryIntervalMs
+
+### Vehicle Sounds
+
+- CarSoundSyncEnabled
+- CarSoundSyncMode
+  - All: horn + tires + impacts
+  - HornOnly: horn only
+- CarSoundSyncMinIntervalSeconds
+
+### Save/Progress
+
+- SaveKeySyncEnabled
+- SaveKeyDenySubstrings
+- ClientReceivesHostSaveOnJoin
+- ClientWipeLocalSaveOnJoin
+
+### Player Positions
+
+- Positions.Enabled
+- Positions.SaveIdOverride
+- Positions.ClientTeleportOnJoin
+
+### Debug
+
+- Debug.DebugLogs
+- Debug.DebugLogIntervalSeconds
+
+## Logs
+
+Use BepInEx logs from the game folder.
+
+Useful log markers:
+
+- UDP host listening
+- UDP client started
+- Client registered
+- Snapshot send / Snapshot recv
+- CarSfx send / CarSfx recv / CarSfx relay
+
+## Build From Source
+
+1. Put required dependencies into lib (see lib/README.md).
+2. Run:
+
+   dotnet build -c Release
+
+3. Build output:
+
+   bin/Release/netstandard2.1/EasyDeliveryCoLanCoop.dll
+
+## Project Documents
+
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+MIT License.
+See [LICENSE](LICENSE).
+
+## Feedback
+
+When reporting bugs, include:
+
+- mod version
+- host/client logs
+- reproduction steps
+- relevant config values
