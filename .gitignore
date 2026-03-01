@@ -28,6 +28,10 @@ lib/*.dll
 # Tool cache
 tools/.store/
 
+# Local release bundles
+releases/**
+!releases/.gitkeep
+
 # Test and coverage artifacts
 TestResults/
 coverage/
