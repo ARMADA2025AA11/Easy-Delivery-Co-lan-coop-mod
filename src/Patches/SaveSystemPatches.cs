@@ -44,13 +44,13 @@ internal static class SaveSystemPatches
         {
             var key = __args[0]?.ToString() ?? string.Empty;
             var value = __args[1]?.ToString() ?? string.Empty;
-            if (key.Length != 0 && Plugin.IsSaveKeyAllowed(key))
+            if (key.Length != 0 && Plugin.IsSaveKeyAllowedForWorldSync(key))
                 mgr.SendSaveDelta(key, value);
         }
         else if (__originalMethod.Name == "DeleteKey" && __args.Length >= 1)
         {
             var key = __args[0]?.ToString() ?? string.Empty;
-            if (key.Length != 0 && Plugin.IsSaveKeyAllowed(key))
+            if (key.Length != 0 && Plugin.IsSaveKeyAllowedForWorldSync(key))
                 mgr.SendSaveDelete(key);
         }
     }

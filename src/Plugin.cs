@@ -12,7 +12,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "coopmod.easydeliveryco.lancoop";
     public const string PluginName = "EasyDeliveryCoLanCoop";
-    public const string PluginVersion = "0.2.18";
+    public const string PluginVersion = "0.2.19";
 
     internal static ManualLogSource Log = null!;
 
@@ -27,6 +27,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     internal static ConfigEntry<bool> SaveKeySyncEnabled = null!;
     internal static ConfigEntry<string> SaveKeyDenySubstrings = null!;
+    internal static ConfigEntry<string> SaveKeyPersonalDenySubstrings = null!;
 
     internal static ConfigEntry<bool> SharedMoneyEnabled = null!;
     internal static ConfigEntry<bool> AutoEnterWorldOnConnect = null!;
@@ -94,6 +95,13 @@ public sealed class Plugin : BaseUnityPlugin
             "SaveKeyDenySubstrings",
             "pos,rot,camera,cam,look,player,guy,controller,car,vehicle,rb,transform",
             "Comma-separated substrings; matching keys will NOT be replicated/applied (case-insensitive). Use to avoid syncing per-player runtime state.");
+
+        SaveKeyPersonalDenySubstrings = Config.Bind(
+            "Sync",
+            "SaveKeyPersonalDenySubstrings",
+            "inventory,backpack,bag,hotbar,quickslot,helditem,equipped,loadout,playerinventory",
+            "Additional comma-separated substrings treated as personal player state. These keys are excluded from host->client save snapshots and live save replication so each player keeps their own inventory/loadout."
+        );
 
         SharedMoneyEnabled = Config.Bind(
             "Sync",
@@ -333,6 +341,52 @@ public sealed class Plugin : BaseUnityPlugin
         }
 
         return true;
+    }
+
+    internal static bool IsPersonalSaveKey(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return false;
+
+        if (ContainsAnyCsvSubstring(key, SaveKeyPersonalDenySubstrings?.Value))
+            return true;
+
+        // Hard fallback heuristics for common per-player keys even if config was emptied.
+        var lower = key.ToLowerInvariant();
+        if (lower.Contains("inventory") || lower.Contains("backpack") || lower.Contains("loadout"))
+            return true;
+        if (lower.Contains("hotbar") || lower.Contains("quickslot") || lower.Contains("equipped"))
+            return true;
+        if (lower.Contains("helditem") || lower.Contains("playerinventory"))
+            return true;
+
+        return false;
+    }
+
+    internal static bool IsSaveKeyAllowedForWorldSync(string key)
+    {
+        if (!IsSaveKeyAllowed(key))
+            return false;
+        if (IsPersonalSaveKey(key))
+            return false;
+        return true;
+    }
+
+    private static bool ContainsAnyCsvSubstring(string key, string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv))
+            return false;
+
+        foreach (var raw in csv.Split(','))
+        {
+            var s = raw.Trim();
+            if (s.Length == 0)
+                continue;
+            if (key.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+
+        return false;
     }
 
     internal static string SanitizeNickname(string? nick)

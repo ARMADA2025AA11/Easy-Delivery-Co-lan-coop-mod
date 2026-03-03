@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.19] - 2026-03-03
+
+### Changed
+- Improved host/client spawn consistency by separating saved player positions per map (`deliveryCurrentLastMapBuildIndex`).
+- Added map-aware position save-id suffix (`__mapN`) to avoid cross-city/cross-map spawn mixups.
+
+### Fixed
+- Prevented stale teleport on join when host/client location packets belong to different save slot/map context.
+- Reduced host-save sync side effects on personal player state by tightening world-save key filtering.
+
 ## [0.2.18] - 2026-03-01
 
 ### Added

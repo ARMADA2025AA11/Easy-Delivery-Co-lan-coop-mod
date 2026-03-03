@@ -186,6 +186,74 @@ internal static class GameAccess
         return false;
     }
 
+    internal static bool TryReadCurrentMapBuildIndex(out int buildIndex)
+    {
+        buildIndex = -1;
+        try
+        {
+            var snap = TryReadSaveSystemSnapshot();
+            if (snap == null || snap.Count == 0)
+                return false;
+
+            var preferredKeys = new[]
+            {
+                "deliveryCurrentLastMapBuildIndex",
+                "deliveryCurrentMapBuildIndex",
+                "currentMapBuildIndex",
+                "mapBuildIndex",
+                "lastMapBuildIndex",
+            };
+
+            for (var i = 0; i < preferredKeys.Length; i++)
+            {
+                if (!snap.TryGetValue(preferredKeys[i], out var raw) || string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                if (TryParseIntLoose(raw, out buildIndex) && buildIndex >= 0)
+                    return true;
+            }
+
+            foreach (var kv in snap)
+            {
+                var key = kv.Key;
+                var raw = kv.Value;
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                var low = key.ToLowerInvariant();
+                if (!low.Contains("map") || !low.Contains("index"))
+                    continue;
+
+                if (TryParseIntLoose(raw, out buildIndex) && buildIndex >= 0)
+                    return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    private static bool TryParseIntLoose(string raw, out int value)
+    {
+        value = 0;
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (int.TryParse(raw, out value))
+            return true;
+
+        if (float.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f))
+        {
+            value = Mathf.RoundToInt(f);
+            return true;
+        }
+
+        return false;
+    }
+
     internal static bool IsGameplayWorldLoaded()
     {
         // Menu scenes typically still have a camera, and sometimes even character prefabs.
@@ -1864,6 +1932,21 @@ internal static class GameAccess
 
         reason = $"No known menu/loader method found. UGUI={btnReason}. UITK={uiTkReason}. Scan={scanReason}";
         return false;
+    }
+
+    internal static string NormalizeSaveIdForSyncCompare(string? saveId)
+    {
+        saveId ??= string.Empty;
+        saveId = saveId.Trim();
+        if (saveId.Length == 0)
+            return string.Empty;
+
+        var slotName = TryExtractSaveSlotName(saveId);
+        if (!string.IsNullOrWhiteSpace(slotName))
+            return slotName.Trim().ToLowerInvariant();
+
+        var fallback = Plugin.SanitizeFileName(saveId);
+        return fallback.Trim().ToLowerInvariant();
     }
 
     private static int? TryExtractSaveSlotIndex(string preferredSaveId)

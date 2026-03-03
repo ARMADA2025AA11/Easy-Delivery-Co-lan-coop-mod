@@ -444,7 +444,7 @@ internal static class NetMessages
                 var k = br.ReadString();
                 var v = br.ReadString();
 
-                if (!Plugin.IsSaveKeyAllowed(k))
+                if (!Plugin.IsSaveKeyAllowedForWorldSync(k))
                     return;
 
                 if (mgr.IsHost)
@@ -464,7 +464,7 @@ internal static class NetMessages
             {
                 var k = br.ReadString();
 
-                if (!Plugin.IsSaveKeyAllowed(k))
+                if (!Plugin.IsSaveKeyAllowedForWorldSync(k))
                     return;
 
                 if (mgr.IsHost)
@@ -493,7 +493,7 @@ internal static class NetMessages
                         {
                             var k = br.ReadString();
                             var v = br.ReadString();
-                            if (Plugin.IsSaveKeyAllowed(k))
+                            if (Plugin.IsSaveKeyAllowedForWorldSync(k))
                                 GameAccess.TryApplySaveKey(k, v);
                         }
                     }

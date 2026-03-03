@@ -25,6 +25,21 @@ internal static class PlayerPositionsStore
 
     internal static string CurrentSaveId => _currentSaveId;
 
+    internal static void HostRefreshSaveIdNow()
+    {
+        if (!Plugin.PlayerPositionsEnabled.Value)
+            return;
+
+        var id = TryGetCurrentSaveId(out _);
+        if (string.Equals(id, _currentSaveId, StringComparison.Ordinal))
+            return;
+
+        _currentSaveId = id;
+        _entries.Clear();
+        _dirty = false;
+        TryLoadFromDisk(_currentSaveId);
+    }
+
     internal static void HostTick(float now)
     {
         if (!Plugin.PlayerPositionsEnabled.Value)
@@ -108,20 +123,24 @@ internal static class PlayerPositionsStore
     {
         source = "fallback";
 
+        var mapSuffix = string.Empty;
+        if (GameAccess.TryReadCurrentMapBuildIndex(out var mapBuildIndex) && mapBuildIndex >= 0)
+            mapSuffix = $"__map{mapBuildIndex}";
+
         var overrideId = Plugin.PlayerPositionsSaveIdOverride.Value;
         if (!string.IsNullOrWhiteSpace(overrideId))
         {
             source = "override";
-            return Plugin.SanitizeFileName(overrideId);
+            return Plugin.SanitizeFileName(overrideId + mapSuffix);
         }
 
         if (GameAccess.TryReadSaveId(out var id) && !string.IsNullOrWhiteSpace(id))
         {
             source = "auto";
-            return Plugin.SanitizeFileName(id);
+            return Plugin.SanitizeFileName(id + mapSuffix);
         }
 
-        return "default";
+        return string.IsNullOrEmpty(mapSuffix) ? "default" : Plugin.SanitizeFileName("default" + mapSuffix);
     }
 
     private static string GetFilePath(string saveId)

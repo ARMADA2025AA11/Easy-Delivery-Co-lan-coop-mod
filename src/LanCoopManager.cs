@@ -639,6 +639,7 @@ public sealed class LanCoopManager : MonoBehaviour
                 continue;
             st.NextSendAt = now + InitialSyncIntervalSeconds;
 
+            PlayerPositionsStore.HostRefreshSaveIdNow();
             var saveId = PlayerPositionsStore.CurrentSaveId;
 
             if (Plugin.SharedMoneyEnabled.Value)
@@ -656,7 +657,7 @@ public sealed class LanCoopManager : MonoBehaviour
                     var filtered = new Dictionary<string, string?>(snap.Count, StringComparer.Ordinal);
                     foreach (var kv in snap)
                     {
-                        if (Plugin.IsSaveKeyAllowed(kv.Key))
+                        if (Plugin.IsSaveKeyAllowedForWorldSync(kv.Key))
                             filtered[kv.Key] = kv.Value;
                     }
 
@@ -810,7 +811,7 @@ public sealed class LanCoopManager : MonoBehaviour
                 {
                     foreach (var kv in _pendingSaveFull.Data)
                     {
-                        if (!Plugin.IsSaveKeyAllowed(kv.Key))
+                        if (!Plugin.IsSaveKeyAllowedForWorldSync(kv.Key))
                             continue;
                         if (GameAccess.TryApplyPlayerPrefString(kv.Key, kv.Value))
                             applied++;
@@ -844,14 +845,14 @@ public sealed class LanCoopManager : MonoBehaviour
             {
                 foreach (var kv in local)
                 {
-                    if (Plugin.IsSaveKeyAllowed(kv.Key))
+                    if (Plugin.IsSaveKeyAllowedForWorldSync(kv.Key))
                         GameAccess.TryDeleteSaveKey(kv.Key);
                 }
             }
 
             foreach (var kv in _pendingSaveFull.Data)
             {
-                if (Plugin.IsSaveKeyAllowed(kv.Key))
+                if (Plugin.IsSaveKeyAllowedForWorldSync(kv.Key))
                     GameAccess.TryApplySaveKey(kv.Key, kv.Value);
             }
 
@@ -1490,6 +1491,12 @@ public sealed class LanCoopManager : MonoBehaviour
             return;
 
         if (_clientTeleportedFromHost)
+            return;
+
+        // Ignore stale locations from another save slot/city while reconnecting or loading.
+        if (!string.IsNullOrWhiteSpace(_clientLastSaveIdFromHost) &&
+            !string.IsNullOrWhiteSpace(saveId) &&
+            !string.Equals(GameAccess.NormalizeSaveIdForSyncCompare(_clientLastSaveIdFromHost), GameAccess.NormalizeSaveIdForSyncCompare(saveId), StringComparison.Ordinal))
             return;
 
         var selfNick = Plugin.SanitizeNickname(Plugin.Nickname.Value);

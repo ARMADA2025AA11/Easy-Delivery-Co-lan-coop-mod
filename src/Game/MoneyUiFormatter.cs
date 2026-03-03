@@ -18,6 +18,14 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
 
     private void Update()
     {
+        if (string.Equals(Plugin.GetEffectiveNetworkMode(), "Off", StringComparison.OrdinalIgnoreCase))
+        {
+            _hud = null;
+            _moneyText = null;
+            _textProp = null;
+            return;
+        }
+
         var now = Time.unscaledTime;
 
         if (now >= _nextResolveAt)
@@ -26,8 +34,12 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
             ResolveTargets();
         }
 
-        if (_moneyText == null || _textProp == null)
+        if (!IsUnityObjectAlive(_moneyText) || _textProp == null)
+        {
+            _moneyText = null;
+            _textProp = null;
             return;
+        }
 
         if (now < _nextUpdateAt)
             return;
@@ -56,6 +68,9 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
 
     private void ResolveTargets()
     {
+        if (!IsUnityObjectAlive(_hud))
+            _hud = null;
+
         if (_hud == null)
             _hud = TryFindObjectOfTypeByName("sHUD");
 
@@ -81,13 +96,25 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
         }
 
         // 2) Fallback: scan child components of HUD GameObject.
-        if (_hud is Component comp)
+        if (_hud is Component comp && comp != null)
         {
             if (!GameAccess.TryReadHudMoney(out var moneyInt))
                 moneyInt = 0;
 
             var moneyToken = moneyInt.ToString(CultureInfo.CurrentCulture);
-            var comps = comp.GetComponentsInChildren<Component>(includeInactive: true);
+            Component[] comps;
+            try
+            {
+                comps = comp.GetComponentsInChildren<Component>(includeInactive: true);
+            }
+            catch
+            {
+                _hud = null;
+                _moneyText = null;
+                _textProp = null;
+                return;
+            }
+
             for (var i = 0; i < comps.Length; i++)
             {
                 var c = comps[i];
@@ -103,7 +130,11 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
                     if (string.IsNullOrWhiteSpace(txt))
                         continue;
 
-                    var lowName = c.gameObject.name?.ToLowerInvariant() ?? string.Empty;
+                    var go = c.gameObject;
+                    if (go == null)
+                        continue;
+
+                    var lowName = go.name?.ToLowerInvariant() ?? string.Empty;
                     if (lowName.Contains("money") || lowName.Contains("cash") || lowName.Contains("coins"))
                     {
                         _moneyText = c;
@@ -270,5 +301,16 @@ internal sealed class MoneyUiFormatter : MonoBehaviour
         }
 
         return null;
+    }
+
+    private static bool IsUnityObjectAlive(object? value)
+    {
+        if (value == null)
+            return false;
+
+        if (value is UnityEngine.Object uo)
+            return uo != null;
+
+        return true;
     }
 }
